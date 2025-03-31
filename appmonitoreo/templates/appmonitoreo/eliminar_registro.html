@@ -1,0 +1,23 @@
+{% extends 'appmonitoreo/base.html' %}
+
+{% block title %}Eliminar Registro{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center vh-100">
+    <div class="card shadow p-4 text-center" style="max-width: 400px;">
+        <h2 class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Confirmar Eliminación</h2>
+        <p class="mt-3">¿Estás seguro de que deseas eliminar este registro?</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger w-100 mt-2">
+                <i class="bi bi-trash"></i> Sí, eliminar
+            </button>
+        </form>
+
+        <a href="{% url 'index' %}" class="btn btn-secondary w-100 mt-3">
+            <i class="bi bi-arrow-left"></i> Cancelar
+        </a>
+    </div>
+</div>
+{% endblock %}

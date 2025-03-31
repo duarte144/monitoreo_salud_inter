@@ -1,0 +1,160 @@
+{% extends 'appmonitoreo/base.html' %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-3">Lista de Gatos</h2>
+
+    <input type="text" id="searchGato" class="form-control mb-2" placeholder="Buscar gato por nombre...">
+
+    <button class="btn btn-danger mb-3 d-flex align-items-center" onclick="exportToPDF('gatosTable', 'Lista_Gatos')">
+        <i class="bi bi-file-earmark-pdf me-2"></i> Exportar PDF
+    </button>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" id="gatosTable">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Edad</th>
+                    <th>Raza</th>
+                    <th>Peso (kg)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gato in gatos %}
+                <tr>
+                    <td>{{ gato.nombre }}</td>
+                    <td>{{ gato.edad }}</td>
+                    <td>{{ gato.raza|default:"No especificado" }}</td>
+                    <td>{{ gato.peso }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No hay gatos registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="mt-4">Registros de Temperatura</h2>
+
+    <input type="text" id="searchRegistro" class="form-control mb-2" placeholder="Buscar por nombre de gato...">
+
+    <button class="btn btn-danger mb-3 d-flex align-items-center" onclick="exportToPDF('registrosTable', 'Registros_Temperatura')">
+        <i class="bi bi-file-earmark-pdf me-2"></i> Exportar PDF
+    </button>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" id="registrosTable">
+            <thead>
+                <tr>
+                    <th>Gato</th>
+                    <th>Temperatura (°C)</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for registro in registros %}
+                <tr>
+                    <td>{{ registro.gato.nombre }}</td>
+                    <td>{{ registro.temperatura }}</td>
+                    <td>{{ registro.fecha_registro|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center">No hay registros de temperatura.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de alerta cuando no hay datos para exportar -->
+<div class="modal" tabindex="-1" id="emptyTableModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">No hay datos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>No hay datos disponibles para exportar a PDF.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para búsqueda en tiempo real -->
+<script>
+// Función de búsqueda en todas las columnas
+document.querySelector("#searchGato").addEventListener("keyup", function() {
+    let value = this.value.toLowerCase();
+    document.querySelectorAll("#gatosTable tbody tr").forEach(row => {
+        let columns = row.cells;
+        let matched = false;
+        for (let col of columns) {
+            if (col.textContent.toLowerCase().includes(value)) {
+                matched = true;
+                break;
+            }
+        }
+        row.style.display = matched ? "" : "none";
+    });
+});
+
+document.querySelector("#searchRegistro").addEventListener("keyup", function() {
+    let value = this.value.toLowerCase();
+    document.querySelectorAll("#registrosTable tbody tr").forEach(row => {
+        let columns = row.cells;
+        let matched = false;
+        for (let col of columns) {
+            if (col.textContent.toLowerCase().includes(value)) {
+                matched = true;
+                break;
+            }
+        }
+        row.style.display = matched ? "" : "none";
+    });
+});
+</script>
+
+<!-- Scripts para exportar PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.6.0/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+// Función para exportar a PDF
+function exportToPDF(tableId, filename) {
+    let table = document.getElementById(tableId);
+    if (!table || table.querySelectorAll("tbody tr").length === 0) {
+        let modal = new bootstrap.Modal(document.getElementById('emptyTableModal'));
+        modal.show();
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+    let pdf = new jsPDF();
+    
+    // Obtener la fecha y hora actual
+    let now = new Date();
+    let formattedDate = now.toLocaleString('es-ES', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    // Insertar la fecha y hora en el PDF
+    pdf.text(filename + " - " + formattedDate, 10, 15);
+    pdf.autoTable({
+        html: "#" + tableId,
+        theme: 'striped',
+        margin: { top: 15 },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [0, 123, 255] }
+    });
+    pdf.save(filename + ".pdf");
+}
+</script>
+{% endblock %}
